@@ -28,9 +28,8 @@ import org.apache.bcel.verifier.structurals.OperandStack;
  * <p>BCEL ought to automatically build and maintain the StackMapTable in a manner similar to the
  * LineNumberTable and the LocalVariableTable. However, for historical reasons, it does not.
  *
- * <p>If one wishes to modify a Java class file, you should create a subclass of
- * InstructionListUtils to do the modifications. Then a rough program template for that class would
- * be:
+ * <p>If you wish to modify a Java class file, you should create a subclass of InstructionListUtils
+ * to do the modifications. Then a rough program template for that class would be:
  *
  * <pre>
  *   import org.apache.bcel.classfile.*;
@@ -108,6 +107,9 @@ import org.apache.bcel.verifier.structurals.OperandStack;
  */
 @SuppressWarnings("nullness")
 public abstract class InstructionListUtils extends StackMapUtils {
+
+  /** Create a new InstructionListUtils. */
+  public InstructionListUtils() {}
 
   /**
    * Appends the specified instruction to the end of the specified list. Required because for some

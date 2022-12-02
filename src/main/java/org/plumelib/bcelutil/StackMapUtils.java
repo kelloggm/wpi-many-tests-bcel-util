@@ -1,5 +1,6 @@
 package org.plumelib.bcelutil;
 
+import com.google.errorprone.annotations.InlineMe;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -41,6 +42,11 @@ import org.checkerframework.checker.interning.qual.InternedDistinct;
  */
 @SuppressWarnings("nullness")
 public abstract class StackMapUtils {
+
+  /** Create a new StackMapUtils object. */
+  public StackMapUtils() {
+    // Nothing to do.
+  }
 
   /*
    * NOMENCLATURE
@@ -669,6 +675,7 @@ public abstract class StackMapUtils {
    * @deprecated use {@link #set_current_stack_map_table}
    */
   @Deprecated // use set_current_stack_map_table() */
+  @InlineMe(replacement = "this.set_current_stack_map_table(mgen, java_class_version)")
   protected final void fetch_current_stack_map_table(MethodGen mgen, int java_class_version) {
     set_current_stack_map_table(mgen, java_class_version);
   }
@@ -899,6 +906,7 @@ public abstract class StackMapUtils {
    * @deprecated use {@link #add_new_parameter}
    */
   @Deprecated // use add_new_parameter()
+  @InlineMe(replacement = "this.add_new_parameter(mgen, arg_name, arg_type)")
   protected final LocalVariableGen add_new_argument(
       MethodGen mgen, String arg_name, Type arg_type) {
     return add_new_parameter(mgen, arg_name, arg_type);

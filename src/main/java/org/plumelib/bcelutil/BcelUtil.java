@@ -1,5 +1,6 @@
 package org.plumelib.bcelutil;
 
+import com.google.errorprone.annotations.InlineMe;
 import java.io.File;
 import java.io.PrintStream;
 import java.util.Arrays;
@@ -593,8 +594,9 @@ public final class BcelUtil {
   public static void resetLocalsToFormals(MethodGen mg) {
 
     // Get the parameter types and names.
-    Type[] argTypes = mg.getArgumentTypes();
-    String[] argNames = mg.getArgumentNames();
+    Type [] argTypes = mg.getArgumentTypes();
+    String []
+        argNames = mg.getArgumentNames();
 
     // Remove any existing locals
     mg.setMaxLocals(0);
@@ -720,8 +722,10 @@ public final class BcelUtil {
    * @deprecated use {@link #binaryNameToType}
    */
   // TODO: Poor name because this handles any non-array, not just classes.
-  @SuppressWarnings("InlineMeSuggester")
   @Deprecated // use binaryNameToType
+  @InlineMe(
+      replacement = "BcelUtil.binaryNameToType(classname)",
+      imports = "org.plumelib.bcelutil.BcelUtil")
   public static Type classnameToType(String classname) {
     return binaryNameToType(classname);
   }
@@ -772,7 +776,7 @@ public final class BcelUtil {
 
     Signatures.ClassnameAndDimensions cad =
         Signatures.ClassnameAndDimensions.parseFqBinaryName(classname);
-    Type eltType = classnameToType(cad.classname);
+    Type eltType = binaryNameToType(cad.classname);
     if (cad.dimensions == 0) {
       return eltType;
     } else {

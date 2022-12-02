@@ -10,7 +10,7 @@ plugins {
   // id 'com.github.sherter.google-java-format' version '0.7.1'
 
   // Error Prone linter
-  id("net.ltgt.errorprone") version "2.0.2"
+  id("net.ltgt.errorprone") version "3.0.1"
 
   // Checker Framework pluggable type-checking
   // id 'org.checkerframework' version '0.5.13'
@@ -23,16 +23,18 @@ repositories {
   mavenCentral()
 }
 
+ext.errorproneVersion = '2.16'
+
 dependencies {
   api group: 'org.checkerframework.annotatedlib', name: 'bcel', version: '6.5.0'
   // For a locally-built commons-bcel, set $BCEL and use this line instead of the above.
   // implementation fileTree(dir: "$System.env.BCEL/target", include: 'bcel-6.2.0.2.jar')
 
-  implementation 'org.plumelib:reflection-util:1.0.2'
+  implementation "com.google.errorprone:error_prone_core:${errorproneVersion}"
 
-  implementation 'org.checkerframework:checker-qual:3.8.0'
+  implementation 'org.plumelib:reflection-util:1.0.5'
 
-  testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'
+  testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.1'
   testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
 }
 
@@ -57,35 +59,22 @@ test {
 /// Error Prone linter
 
 dependencies {
-  errorprone("com.google.errorprone:error_prone_core:2.9.0")
-  // JDK 8 support for Error Prone:
-  errorproneJavac("com.google.errorprone:javac:9+181-r4173-1")
+  errorprone("com.google.errorprone:error_prone_core:${errorproneVersion}")
 }
 tasks.withType(JavaCompile).configureEach {
   options.compilerArgs << "-Xlint:all" << "-Werror"
   options.errorprone {
+    enabled = JavaVersion.current() != JavaVersion.VERSION_1_8
     disable("ReferenceEquality") // Use Interning Checker instead.
     // Code copied from BCEL that we don't want to change gratuitously.
     excludedPaths = ".*/org/plumelib/bcelutil/StackVer.java"
-  }
-  if (JavaVersion.current() >= JavaVersion.VERSION_16) {
-    options.fork = true
-    options.forkOptions.jvmArgs += [
-            "--add-opens", "jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED",
-            "--add-opens", "jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED",
-            "--add-opens", "jdk.compiler/com.sun.tools.javac.comp=ALL-UNNAMED",
-            "--add-opens", "jdk.compiler/com.sun.tools.javac.main=ALL-UNNAMED",
-            "--add-opens", "jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED",
-            "--add-opens", "jdk.compiler/com.sun.tools.javac.processing=ALL-UNNAMED",
-            "--add-opens", "jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED",
-            "--add-opens", "jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED",
-    ]
   }
 }
 
 /// Checker Framework pluggable type-checking
 
-/*apply plugin: 'org.checkerframework'
+/*
+apply plugin: 'org.checkerframework'
 
 checkerFramework {
   checkers = [
@@ -105,17 +94,20 @@ checkerFramework {
     '-ArequirePrefixInWarningSuppressions',
     '-AwarnUnneededSuppressions',
   ]
-}*/
+}
+*/
 
+/*
 // To use a locally-built Checker Framework, run gradle with "-PcfLocal".
-/*if (project.hasProperty("cfLocal")) {
+if (project.hasProperty("cfLocal")) {
   def cfHome = String.valueOf(System.getenv("CHECKERFRAMEWORK"))
   dependencies {
     compileOnly files(cfHome + "/checker/dist/checker-qual.jar")
     testCompileOnly files(cfHome + "/checker/dist/checker-qual.jar")
     checkerFramework files(cfHome + "/checker/dist/checker.jar")
   }
-}*/
+}
+*/
 
 /// Javadoc
 
@@ -125,9 +117,19 @@ javadoc {
   options.addStringOption('private', '-quiet')
   exclude 'org/plumelib/bcelutil/StackVer.java'
   options.with {
-    linksOffline 'https://docs.oracle.com/javase/8/docs/api/', 'https://docs.oracle.com/javase/8/docs/api/'
-    // this works locally but not on Travis?
-    //linksOffline 'https://commons.apache.org/proper/commons-bcel/apidocs/', 'https://commons.apache.org/proper/commons-bcel/apidocs/'
+    // "linksOffline 'https://docs.oracle.com/javase/8/docs/api/', ..."
+    // no longer works, because that URL redirects to https://docs.oracle.com/en/java/javase/19/ but not to any specific webpage under it.
+    // "linksOffline 'https://docs.oracle.com/en/java/javase/17/docs/api/', ..."
+    // does not works under JDK <= 17.
+    // Under JDK 11 and JDK 17, even with "-source 8", it yields error:
+    //   The code being documented uses packages in the unnamed module, but the packages defined in
+    //   https://docs.oracle.com/en/java/javase/17/docs/api/ are in named modules.
+    // See https://bugs.openjdk.org/browse/JDK-8274639
+    // JDK 18 has a "--link-modularity-mismatch" command-line option which is "info" or "warn".
+    // I think it would work to:
+    //  *   use JDK 8 links under JDK <= 17.
+    //  * use JDK 17 links, and "--link-modularity-mismatch info", under JDK > 17 (i.e., JDK >= 18).
+    // But it's easier to just not use "linksOffline".
   }
   if (JavaVersion.current().compareTo(org.gradle.api.JavaVersion.VERSION_1_9) >= 0) {
       options.addStringOption("-release", "8");
@@ -169,7 +171,7 @@ dependencies {
 }
 task requireJavadoc(type: JavaExec) {
   description = 'Ensures that Javadoc documentation exists.'
-  main = "org.plumelib.javadoc.RequireJavadoc"
+  mainClass = "org.plumelib.javadoc.RequireJavadoc"
   classpath = configurations.requireJavadoc
   args "src/main/java"
 }

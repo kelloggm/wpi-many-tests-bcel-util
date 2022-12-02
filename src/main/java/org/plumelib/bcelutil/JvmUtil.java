@@ -15,6 +15,11 @@ import java.util.StringTokenizer;
 @Deprecated
 public final class JvmUtil {
 
+  /** Do not instantiate. */
+  private JvmUtil() {
+    throw new Error("do not instantiate");
+  }
+
   /** A map from Java primitive type name (such as "int") to field descriptor (such as "I"). */
   private static HashMap<String, String>
       primitiveToFieldDescriptor = new HashMap<>(8);
