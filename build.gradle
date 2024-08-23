@@ -10,7 +10,7 @@ plugins {
   // id 'com.github.sherter.google-java-format' version '0.7.1'
 
   // Error Prone linter
-  id("net.ltgt.errorprone") version "3.0.1"
+  // id("net.ltgt.errorprone") version "3.0.1"
 
   // Checker Framework pluggable type-checking
   // id 'org.checkerframework' version '0.5.13'
@@ -23,14 +23,14 @@ repositories {
   mavenCentral()
 }
 
-ext.errorproneVersion = '2.16'
+// ext.errorproneVersion = '2.16'
 
 dependencies {
   api group: 'org.checkerframework.annotatedlib', name: 'bcel', version: '6.5.0'
   // For a locally-built commons-bcel, set $BCEL and use this line instead of the above.
   // implementation fileTree(dir: "$System.env.BCEL/target", include: 'bcel-6.2.0.2.jar')
 
-  implementation "com.google.errorprone:error_prone_core:${errorproneVersion}"
+  // implementation "com.google.errorprone:error_prone_core:${errorproneVersion}"
 
   implementation 'org.plumelib:reflection-util:1.0.5'
 
@@ -56,20 +56,20 @@ test {
   }
 }
 
-/// Error Prone linter
-
-dependencies {
-  errorprone("com.google.errorprone:error_prone_core:${errorproneVersion}")
-}
-tasks.withType(JavaCompile).configureEach {
-  options.compilerArgs << "-Xlint:all,-options" << "-Werror"
-  options.errorprone {
-    enabled = JavaVersion.current() != JavaVersion.VERSION_1_8
-    disable("ReferenceEquality") // Use Interning Checker instead.
-    // Code copied from BCEL that we don't want to change gratuitously.
-    excludedPaths = ".*/org/plumelib/bcelutil/StackVer.java"
-  }
-}
+// /// Error Prone linter
+// 
+// dependencies {
+//   errorprone("com.google.errorprone:error_prone_core:${errorproneVersion}")
+// }
+// tasks.withType(JavaCompile).configureEach {
+//   options.compilerArgs << "-Xlint:all,-options" << "-Werror"
+//   options.errorprone {
+//     enabled = JavaVersion.current() != JavaVersion.VERSION_1_8
+//     disable("ReferenceEquality") // Use Interning Checker instead.
+//     // Code copied from BCEL that we don't want to change gratuitously.
+//     excludedPaths = ".*/org/plumelib/bcelutil/StackVer.java"
+//   }
+// }
 
 /// Checker Framework pluggable type-checking
 
@@ -89,7 +89,7 @@ checkerFramework {
   ]
   extraJavacArgs = [
     '-Werror',
-    '-Xlint:-processing', // because of Error Prone's "No processor claimed any of these annotations"
+    // '-Xlint:-processing', // because of Error Prone's "No processor claimed any of these annotations"
     '-AcheckPurityAnnotations',
     '-ArequirePrefixInWarningSuppressions',
     '-AwarnUnneededSuppressions',

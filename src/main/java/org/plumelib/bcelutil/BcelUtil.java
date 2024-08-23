@@ -1,6 +1,6 @@
 package org.plumelib.bcelutil;
 
-import com.google.errorprone.annotations.InlineMe;
+// import com.google.errorprone.annotations.InlineMe;
 import java.io.File;
 import java.io.PrintStream;
 import java.util.Arrays;
@@ -723,9 +723,9 @@ public final class BcelUtil {
    */
   // TODO: Poor name because this handles any non-array, not just classes.
   @Deprecated // use binaryNameToType
-  @InlineMe(
-      replacement = "BcelUtil.binaryNameToType(classname)",
-      imports = "org.plumelib.bcelutil.BcelUtil")
+  // @InlineMe(
+  //     replacement = "BcelUtil.binaryNameToType(classname)",
+  //     imports = "org.plumelib.bcelutil.BcelUtil")
   public static Type classnameToType(String classname) {
     return binaryNameToType(classname);
   }
