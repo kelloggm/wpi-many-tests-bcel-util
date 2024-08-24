@@ -33,6 +33,7 @@ dependencies {
   // implementation "com.google.errorprone:error_prone_core:${errorproneVersion}"
 
   implementation 'org.plumelib:reflection-util:1.0.5'
+  implementation 'org.checkerframework:checker-qual:3.+'
 
   testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.1'
   testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
