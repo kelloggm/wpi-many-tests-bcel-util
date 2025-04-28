@@ -1,25 +1,30 @@
 // REQUIREMENTS to make a release:
-//  * Perform work on a machine connected to the CSE filesystem.
 //  * Your ~/.gradle/gradle.properties file must contain:
-//     ossrhUsername=YOUR_USER_NAME_HERE
-//     ossrhPassword=YOUR_PASSWORD_HERE
+//     SONATYPE_NEXUS_USERNAME=...
+//     SONATYPE_NEXUS_PASSWORD=...
 
-// To make a release:
+// To make a release (run on any filesystem, except the `javadocWeb` step):
 //  * git pull
+//  * In ../build.gradle, ensure that "To use a snapshot version" is not enabled.
 //  * Update the version number in ../README.md and in this file (multiple times in each).
+//    Ensure the version number in this file does not contain "-SNAPSHOT".
 //  * Update ../CHANGELOG.md .
 //  * Save files and stage changes.
-//  * Run in the top-level directory:  ./gradlew clean publish && ./gradlew javadocWeb
+//  * Run in the top-level directory:  ./gradlew clean publish
 //  * Browse to https://oss.sonatype.org/#stagingRepositories, complete the Maven Central release.
 //  * Add a git tag:
-//    VER=1.1.9 && git commit -m "Version $VER" && git push && git tag -a v$VER -m "Version $VER" && git push && git push --tags
-//  * Make a GitHub release. Go to the GitHub releases page, make a release, call it "bcel-util 1.1.9", use the text from ../CHANGELOG.md as the description, attach the .jar file from ../build/libs/
+//    VER=1.2.2 && git commit -m "Version $VER" && git push && git tag -a v$VER -m "Version $VER" && git push && git push --tags
+//  * Make a GitHub release. Go to the GitHub releases page, make a release, call it "bcel-util 1.2.2", use the text from ../CHANGELOG.md as the description, attach the .jar and -all.jar files from ../build/libs/ .
+//  * Finally, run on the CSE filesystem:  git pull && ./gradlew javadocWeb
 
 apply plugin: 'maven-publish'
 apply plugin: 'signing'
 
-group 'org.plumelib'
-version '1.1.9'
+group = 'org.plumelib'
+version = '1.2.2'
+ext {
+  packageName = 'bcel-util'
+}
 
 final isSnapshot = version.contains('SNAPSHOT')
 
@@ -35,17 +40,17 @@ artifacts {
 publishing {
   publications {
     maven(MavenPublication) {
-
       from components.java
+
       pom {
-        name = 'Plume-lib Bcel-Util'
+        name = 'BCEL Util'
         description = 'Utility functions for BCEL.'
-        url = 'https://github.com/plume-lib/bcel-util'
+        url = "https://github.com/plume-lib/${packageName}"
 
         scm {
-          connection = 'scm:git:git@github.com:plume-lib/bcel-util.git'
-          developerConnection = 'scm:git:git@github.com:plume-lib/bcel-util.git'
-          url = 'git@github.com:plume-lib/bcel-util.git'
+          connection = "scm:git:git@github.com:plume-lib/${packageName}.git"
+          developerConnection = "scm:git:git@github.com:plume-lib/${packageName}.git"
+          url = "git@github.com:plume-lib/${packageName}.git"
         }
 
         licenses {
@@ -73,8 +78,8 @@ publishing {
                 : project.properties.getOrDefault('RELEASE_REPOSITORY_URL', 'https://oss.sonatype.org/service/local/staging/deploy/maven2/')
         )
         credentials {
-          username = project.properties.get('ossrhUsername')
-          password = project.properties.get('ossrhPassword')
+          username = project.properties.get('SONATYPE_NEXUS_USERNAME')
+          password = project.properties.get('SONATYPE_NEXUS_PASSWORD')
         }
       }
     }
@@ -88,4 +93,8 @@ signing {
   sign publishing.publications.maven
 }
 
-tasks.withType(Sign).configureEach { onlyIf { !isSnapshot } }
+tasks.withType(Sign).configureEach {
+  onlyIf {
+    !isSnapshot
+  }
+}

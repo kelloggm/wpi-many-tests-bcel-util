@@ -1,8 +1,8 @@
 plugins {
   id 'java-library'
 
-  // To create a fat jar build/libs/bcel-util-all.jar, run: ./gradlew shadowJar
-  id 'com.gradleup.shadow' version '8.3.3'
+  // To create a fat jar build/libs/...-all.jar, run: ./gradlew shadowJar
+  id 'com.gradleup.shadow' version '8.3.6'
 
   // Formatting is disabled due to poor handling of type annotations; wait until
   // this issue is fixed: https://github.com/google/google-java-format/issues/5
@@ -16,27 +16,29 @@ plugins {
   // id 'org.checkerframework' version '0.5.13'
 
   // To show task list as a tree, run: ./gradlew <taskname> taskTree
-  id 'com.dorongold.task-tree' version '1.5'
+  id 'com.dorongold.task-tree' version '4.0.1'
 }
 
 repositories {
+  mavenLocal()
   mavenCentral()
+  maven { url = 'https://oss.sonatype.org/content/repositories/snapshots/' }
 }
 
 // ext.errorproneVersion = '2.16'
 
 dependencies {
-  api group: 'org.checkerframework.annotatedlib', name: 'bcel', version: '6.5.0'
+  api 'org.checkerframework.annotatedlib:bcel:6.5.0'
   // For a locally-built commons-bcel, set $BCEL and use this line instead of the above.
   // implementation fileTree(dir: "$System.env.BCEL/target", include: 'bcel-6.2.0.2.jar')
 
   // implementation "com.google.errorprone:error_prone_core:${errorproneVersion}"
 
-  implementation 'org.plumelib:reflection-util:1.0.5'
+  implementation 'org.plumelib:reflection-util:1.1.5'
   implementation 'org.checkerframework:checker-qual:3.+'
 
-  testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.1'
-  testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
+  testImplementation("org.junit.jupiter:junit-jupiter:5.12.2")
+  testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 // To upload to Maven Central, see instructions in the file.
@@ -57,7 +59,7 @@ test {
   }
 }
 
-// /// Error Prone linter
+// // Error Prone linter
 // 
 // dependencies {
 //   errorprone("com.google.errorprone:error_prone_core:${errorproneVersion}")
@@ -72,13 +74,15 @@ test {
 //   }
 // }
 
-/// Checker Framework pluggable type-checking
+// Checker Framework pluggable type-checking
 
 /*
 apply plugin: 'org.checkerframework'
 
 checkerFramework {
   checkers = [
+    // No need to run CalledMethodsChecker, because ResourceLeakChecker does so.
+    // 'org.checkerframework.checker.calledmethods.CalledMethodsChecker',
     'org.checkerframework.checker.formatter.FormatterChecker',
     // TODO: 'org.checkerframework.checker.index.IndexChecker',
     'org.checkerframework.checker.interning.InterningChecker',
@@ -86,7 +90,7 @@ checkerFramework {
     'org.checkerframework.checker.nullness.NullnessChecker',
     'org.checkerframework.checker.regex.RegexChecker',
     'org.checkerframework.checker.signature.SignatureChecker',
-    'org.checkerframework.common.initializedfields.InitializedFieldsChecker'
+    'org.checkerframework.common.initializedfields.InitializedFieldsChecker',
   ]
   extraJavacArgs = [
     '-Werror',
@@ -100,17 +104,17 @@ checkerFramework {
 
 /*
 // To use a locally-built Checker Framework, run gradle with "-PcfLocal".
-if (project.hasProperty("cfLocal")) {
-  def cfHome = String.valueOf(System.getenv("CHECKERFRAMEWORK"))
+if (project.hasProperty('cfLocal')) {
+  def cfHome = String.valueOf(System.getenv('CHECKERFRAMEWORK'))
   dependencies {
-    compileOnly files(cfHome + "/checker/dist/checker-qual.jar")
-    testCompileOnly files(cfHome + "/checker/dist/checker-qual.jar")
-    checkerFramework files(cfHome + "/checker/dist/checker.jar")
+    compileOnly files(cfHome + '/checker/dist/checker-qual.jar')
+    testCompileOnly files(cfHome + '/checker/dist/checker-qual.jar')
+    checkerFramework files(cfHome + '/checker/dist/checker.jar')
   }
 }
 */
 
-/// Javadoc
+// Javadoc
 
 // Turn Javadoc warnings into errors.
 javadoc {
@@ -147,7 +151,7 @@ javadoc {
 check.dependsOn javadoc
 
 task javadocWeb(type: Javadoc) {
-  description "Upload API documentation to website."
+  description = 'Upload API documentation to website.'
   source = sourceSets.main.allJava
   destinationDir = file("/cse/web/research/plumelib/${project.name}/api")
   classpath = project.sourceSets.main.compileClasspath
@@ -168,22 +172,23 @@ configurations {
   requireJavadoc
 }
 dependencies {
-  requireJavadoc "org.plumelib:require-javadoc:1.0.0"
+  requireJavadoc 'org.plumelib:require-javadoc:1.0.9'
 }
 task requireJavadoc(type: JavaExec) {
+  group = 'Documentation'
   description = 'Ensures that Javadoc documentation exists.'
-  mainClass = "org.plumelib.javadoc.RequireJavadoc"
+  mainClass = 'org.plumelib.javadoc.RequireJavadoc'
   classpath = configurations.requireJavadoc
-  args "src/main/java"
+  args 'src/main/java'
 }
 check.dependsOn requireJavadoc
 javadocWeb.dependsOn requireJavadoc
 
 
-/// Git hooks
+// Git hooks
 
 task installGitHooks(type: Copy) {
-  description 'Copies git hooks to .git directory'
+  description = 'Copies git hooks to .git directory'
   from 'githooks'
   into '.git/hooks'
 }
@@ -192,10 +197,10 @@ tasks.withType(JavaCompile) {
   dependsOn(':installGitHooks')
 }
 
-/// Emacs support
+// Emacs support
 
 /* Make Emacs TAGS table */
 task tags(type: Exec) {
-  description "Run etags to create an Emacs TAGS table"
-  commandLine "bash", "-c", "find src/ -name '*.java' | sort | xargs etags"
+  description = 'Run etags to create an Emacs TAGS table'
+  commandLine 'bash', '-c', "find src/ -name '*.java' | sort | xargs etags"
 }
