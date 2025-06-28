@@ -194,6 +194,7 @@ task installGitHooks(type: Copy) {
 }
 
 tasks.withType(JavaCompile) {
+  options.release = 11
   dependsOn(':installGitHooks')
 }
 
