@@ -3,7 +3,7 @@ plugins {
 
 /*
   // To create a fat jar build/libs/...-all.jar, run: ./gradlew shadowJar
-  id 'com.gradleup.shadow' version '8.3.7'
+  id 'com.gradleup.shadow' version '8.3.8'
 
   // Code formatting; defines targets "spotlessApply" and "spotlessCheck"
   // Version 6.14.0 and later requires JRE 11+, but version 6.13.0 doesn't work on JRE 21.
@@ -13,7 +13,7 @@ plugins {
   id('net.ltgt.errorprone') version '4.3.0'
 
   // Checker Framework pluggable type-checking
-  id 'org.checkerframework' version '0.6.55'
+  id 'org.checkerframework' version '0.6.56'
 */
 
   // To show task list as a tree, run: ./gradlew <taskname> taskTree
@@ -23,12 +23,12 @@ plugins {
 repositories {
   mavenLocal()
   mavenCentral()
-  maven { url = 'https://oss.sonatype.org/content/repositories/snapshots/' }
+  maven { url = 'https://central.sonatype.com/repository/maven-snapshots/' }
 }
 
 /*
 ext {
-  errorproneVersion = '2.39.0'
+  errorproneVersion = '2.41.0'
   isJava17orHigher = JavaVersion.current() >= JavaVersion.VERSION_17
   isJava21orHigher = JavaVersion.current() >= JavaVersion.VERSION_21
 }
@@ -42,7 +42,7 @@ dependencies {
   implementation 'org.plumelib:reflection-util:1.1.5'
   implementation 'org.checkerframework:checker-qual:3.+'
 
-  testImplementation("org.junit.jupiter:junit-jupiter:5.13.2")
+  testImplementation("org.junit.jupiter:junit-jupiter:5.13.4")
   testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
@@ -76,16 +76,12 @@ if (! isJava21orHigher) {
       endWithNewline()
     }
     java {
-*/
-//      targetExclude('**/WeakIdentityHashMap.java')
-/*
+      targetExclude('WeakIdentityHashMap.java')
       googleJavaFormat()
       formatAnnotations()
     }
     groovyGradle {
-*/
-//      target '**/*.gradle'
-/*
+      target '*.gradle'
       greclipse()  // which formatter Spotless should use to format .gradle files.
       indentWithSpaces(2) // in Spotless version 7, change to: leadingTabsToSpaces(2)
       trimTrailingWhitespace()
@@ -108,9 +104,7 @@ tasks.withType(JavaCompile).configureEach {
     disable('ReferenceEquality') // Use Interning Checker instead.
     disable('AnnotateFormatMethod') // Error Prone doesn't know about Checker Framework @FormatMethod
     // Code copied from BCEL that we don't want to change gratuitously.
-*/
-//    excludedPaths = '.*/org/plumelib/bcelutil/StackVer.java'
-/*
+    excludedPaths = 'org/plumelib/bcelutil/StackVer.java'
   }
   options.errorprone.enabled = isJava17orHigher
 }
@@ -147,7 +141,7 @@ checkerFramework {
 // To use a snapshot version of the Checker Framework.
 if (false) {
   // TODO: Change the above test to false when CF is released.
-  ext.checkerFrameworkVersion = '3.49.4'
+  ext.checkerFrameworkVersion = '3.49.5'
   dependencies {
     compileOnly "org.checkerframework:checker-qual:${checkerFrameworkVersion}"
     testCompileOnly "org.checkerframework:checker-qual:${checkerFrameworkVersion}"
@@ -192,12 +186,12 @@ javadoc {
   }
   options.addStringOption('source', '11')
   doLast {
-      ant.replaceregexp(match:"@import url\\('resources/fonts/dejavu.css'\\);\\s*", replace:'',
-	flags:'g', byline:true) {
-	fileset(dir: destinationDir)
-      }
+    ant.replaceregexp(match:"@import url\\('resources/fonts/dejavu.css'\\);\\s*", replace:'',
+	              flags:'g', byline:true) {
+      fileset(dir: destinationDir)
     }
   }
+}
 check.dependsOn javadoc
 
 task javadocWeb(type: Javadoc) {
