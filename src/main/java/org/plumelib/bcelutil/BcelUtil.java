@@ -1,10 +1,11 @@
 package org.plumelib.bcelutil;
 
-// import com.google.errorprone.annotations.InlineMe;
 import java.io.File;
 import java.io.PrintStream;
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.apache.bcel.Const;
 import org.apache.bcel.classfile.Attribute;
 import org.apache.bcel.classfile.Code;
@@ -28,8 +29,12 @@ import org.apache.bcel.generic.MethodGen;
 import org.apache.bcel.generic.ObjectType;
 import org.apache.bcel.generic.RETURN;
 import org.apache.bcel.generic.Type;
+import org.checkerframework.checker.index.qual.SameLen;
 import org.checkerframework.checker.signature.qual.BinaryName;
+import org.checkerframework.checker.signature.qual.BinaryNameOrPrimitiveType;
+import org.checkerframework.checker.signature.qual.ClassGetName;
 import org.checkerframework.checker.signature.qual.FqBinaryName;
+import org.checkerframework.checker.signature.qual.InternalForm;
 import org.plumelib.reflection.ReflectionPlume;
 import org.plumelib.reflection.Signatures;
 
@@ -46,24 +51,41 @@ public final class BcelUtil {
   /** The type that represents String[]. */
   private static final Type stringArray = Type.getType("[Ljava.lang.String;");
 
-  /** The major version number of the Java runtime. */
+  /** The major version number of the Java runtime (JRE), such as 8, 11, or 17. */
   public static final int javaVersion = getJavaVersion();
 
+  // Keep in sync with SystemUtil.java (in the Checker Framework).
   /**
-   * Extract the major version number from the "java.version" system property.
+   * Returns the major version number from the "java.version" system property, such as 8, 11, or 17.
+   *
+   * <p>Two possible formats of the "java.version" system property are considered. Up to Java 8,
+   * from a version string like `1.8.whatever`, this method extracts 8. Since Java 9, from a version
+   * string like `11.0.1`, this method extracts 11.
+   *
+   * <p>Starting in Java 9, there is the int {@code Runtime.version().feature()}, but that does not
+   * exist on JDK 8.
    *
    * @return the major version of the Java runtime
    */
   private static int getJavaVersion() {
     String version = System.getProperty("java.version");
+
+    // Up to Java 8, from a version string like "1.8.whatever", extract "8".
     if (version.startsWith("1.")) {
-      // Up to Java 8, from a version string like "1.8.whatever", extract "8".
-      version = version.substring(2, 3);
-    } else {
-      // Since Java 9, from a version string like "11.0.1", extract "11".
-      version = version.substring(0, version.indexOf("."));
+      return Integer.parseInt(version.substring(2, 3));
     }
-    return Integer.parseInt(version);
+
+    // Since Java 9, from a version string like "11.0.1" or "11-ea" or "11u25", extract "11".
+    // The format is described at http://openjdk.org/jeps/223 .
+    Pattern newVersionPattern = Pattern.compile("^(\\d+).*$");
+    Matcher newVersionMatcher = newVersionPattern.matcher(version);
+    if (newVersionMatcher.matches()) {
+      String v = newVersionMatcher.group(1);
+      assert v != null : "@AssumeAssertion(nullness): inspection";
+      return Integer.parseInt(v);
+    }
+
+    throw new RuntimeException("Could not determine version from property java.version=" + version);
   }
 
   // 'ToString' methods
@@ -73,7 +95,7 @@ public final class BcelUtil {
    * private, static, etc), the return type, the method name, and the types of each of its
    * parameters.
    *
-   * <p>For example, if the orignal Java source declarationwas: private final String
+   * <p>For example, if the original Java source declaration was: private final String
    * constantToString (int index) Then the output of methodDeclarationToString would be: private
    * final java.lang.String constantToString (int)
    *
@@ -101,7 +123,7 @@ public final class BcelUtil {
   }
 
   /**
-   * Return a string representation of the access flags of method m. In the string, the flags are
+   * Returns a string representation of the access flags of method m. In the string, the flags are
    * space-separated and in a canonical order.
    *
    * @param m the method whose access flags to retrieve
@@ -131,7 +153,7 @@ public final class BcelUtil {
   }
 
   /**
-   * Return a printed description of the given instructions.
+   * Returns a printed description of the given instructions.
    *
    * @param il the instructions to describe
    * @param pool the constant pool the instructions refer to
@@ -148,7 +170,7 @@ public final class BcelUtil {
   }
 
   /**
-   * Return a description of the local variables (one per line).
+   * Returns a description of the local variables (one per line).
    *
    * @param mg the method whose local variables to describe
    * @return a description of the local variables (one per line)
@@ -167,7 +189,7 @@ public final class BcelUtil {
   }
 
   /**
-   * Return the attribute name for the specified attribute, looked up in the original class file
+   * Returns the attribute name for the specified attribute, looked up in the original class file
    * ConstantPool.
    *
    * @param a the attribute
@@ -183,7 +205,7 @@ public final class BcelUtil {
   }
 
   /**
-   * Return the attribute name for the specified attribute, looked up in the given ConstantPoolGen.
+   * Returns the attribute name for the specified attribute, looked up in the given ConstantPoolGen.
    *
    * @param a the attribute
    * @param pool the constant pool
@@ -200,7 +222,7 @@ public final class BcelUtil {
   // 'is' (boolean test) methods
 
   /**
-   * Returns whether or not the method is a constructor.
+   * Returns true if the method is a constructor.
    *
    * @param mg the MethodGen to test
    * @return true iff the method is a constructor
@@ -213,7 +235,7 @@ public final class BcelUtil {
   }
 
   /**
-   * Returns whether or not the method is a constructor.
+   * Returns true if the method is a constructor.
    *
    * @param m the Method to test
    * @return true iff the method is a constructor
@@ -226,7 +248,7 @@ public final class BcelUtil {
   }
 
   /**
-   * Returns whether or not the method is a class initializer.
+   * Returns true if the method is a class initializer.
    *
    * @param mg the method to test
    * @return true iff the method is a class initializer
@@ -236,7 +258,7 @@ public final class BcelUtil {
   }
 
   /**
-   * Returns whether or not the method is a class initializer.
+   * Returns true if the method is a class initializer.
    *
    * @param m the method to test
    * @return true iff the method is a class initializer
@@ -246,7 +268,7 @@ public final class BcelUtil {
   }
 
   /**
-   * Returns whether or not the class is part of the JDK (rt.jar).
+   * Returns true if the class is part of the JDK (rt.jar).
    *
    * @param gen the class to test
    * @return true iff the class is in a package that is in the JDK (rt.jar)
@@ -256,7 +278,7 @@ public final class BcelUtil {
   }
 
   /**
-   * Returns whether or not the class is part of the JDK (rt.jar).
+   * Returns true if the class is part of the JDK (rt.jar).
    *
    * @param classname the class to test, in the format of Class.getName(); the class should not be
    *     an array
@@ -274,20 +296,14 @@ public final class BcelUtil {
         || classname.startsWith("sun.")) {
       return true;
     }
-    if (javaVersion <= 8) {
-      if (classname.startsWith("com.oracle.") || classname.startsWith("org.omg.")) {
-        return true;
-      }
-    } else {
-      if (classname.startsWith("netscape.javascript.") || classname.startsWith("org.graalvm.")) {
-        return true;
-      }
+    if (classname.startsWith("netscape.javascript.") || classname.startsWith("org.graalvm.")) {
+      return true;
     }
     return false;
   }
 
   /**
-   * Returns whether or not the class is part of the JDK (rt.jar).
+   * Returns true if the class is part of the JDK (rt.jar).
    *
    * @param classname the class to test, in internal form
    * @return true iff the class is part of the JDK (rt.jar)
@@ -304,20 +320,14 @@ public final class BcelUtil {
         || classname.startsWith("sun/")) {
       return true;
     }
-    if (javaVersion <= 8) {
-      if (classname.startsWith("com/oracle/") || classname.startsWith("org/omg/")) {
-        return true;
-      }
-    } else {
-      if (classname.startsWith("netscape/javascript/") || classname.startsWith("org/graalvm/")) {
-        return true;
-      }
+    if (classname.startsWith("netscape/javascript/") || classname.startsWith("org/graalvm/")) {
+      return true;
     }
     return false;
   }
 
   /**
-   * Returns whether or not the specified attribute is a local variable type table.
+   * Returns true if the specified attribute is a local variable type table.
    *
    * @param a the attribute
    * @param pool the constant pool
@@ -328,8 +338,8 @@ public final class BcelUtil {
   }
 
   /**
-   * Returns whether or not this is a standard main method (static, void, name is 'main', and one
-   * formal parameter: a string array).
+   * Returns true if this is a standard main method (static, void, name is 'main', and one formal
+   * parameter: a string array).
    *
    * @param mg the method to check
    * @return true iff the method is a main method
@@ -478,11 +488,8 @@ public final class BcelUtil {
    */
   public static void dump(JavaClass jc, File dumpDir) {
 
-    try {
       dumpDir.mkdir();
-      File path = new File(dumpDir, jc.getClassName() + ".bcel");
-      PrintStream p = new PrintStream(path);
-
+    try (PrintStream p = new PrintStream(new File(dumpDir, jc.getClassName() + ".bcel"))) {
       // Print the class, superclass, and interfaces
       p.printf("class %s extends %s%n", jc.getClassName(), jc.getSuperclassName());
       String[] inames = jc.getInterfaceNames();
@@ -490,7 +497,9 @@ public final class BcelUtil {
       if ((inames != null) && (inames.length > 0)) {
         p.printf("   implements ");
         for (String iname : inames) {
-          if (!first) p.printf(", ");
+          if (!first) {
+            p.printf(", ");
+          }
           p.printf("%s", iname);
           first = false;
         }
@@ -524,9 +533,6 @@ public final class BcelUtil {
       for (int ii = 0; ii < constants.length; ii++) {
         p.printf("  %d %s%n", ii, constants[ii]);
       }
-
-      p.close();
-
     } catch (Exception e) {
       throw new Error(
           "Unexpected error dumping JavaClass: " + jc.getClassName() + " to " + dumpDir.getName(),
@@ -593,11 +599,6 @@ public final class BcelUtil {
    */
   public static void resetLocalsToFormals(MethodGen mg) {
 
-    // Get the parameter types and names.
-    Type [] argTypes = mg.getArgumentTypes();
-    String []
-        argNames = mg.getArgumentNames();
-
     // Remove any existing locals
     mg.setMaxLocals(0);
     mg.removeLocalVariables();
@@ -607,6 +608,11 @@ public final class BcelUtil {
       mg.addLocalVariable("this", new ObjectType(mg.getClassName()), null, null);
     }
 
+    // Get the parameter types and names.
+    Type [] argTypes = mg.getArgumentTypes();
+    String []
+        argNames = mg.getArgumentNames();
+
     // Add a local for each parameter
     for (int ii = 0; ii < argNames.length; ii++) {
       mg.addLocalVariable(argNames[ii], argTypes[ii], null, null);
@@ -615,8 +621,6 @@ public final class BcelUtil {
     // Reset the current number of locals so that when other locals
     // are added they get added at the correct offset.
     mg.setMaxLocals();
-
-    return;
   }
 
   /**
@@ -713,25 +717,7 @@ public final class BcelUtil {
   }
 
   /**
-   * Return the type corresponding to a given binary name or primitive type name.
-   *
-   * @param classname the binary name of a class (= fully-qualified name, except for inner classes),
-   *     or a primitive type name, but not an array
-   * @return the type corresponding to the given class name
-   * @see #fqBinaryNameToType
-   * @deprecated use {@link #binaryNameToType}
-   */
-  // TODO: Poor name because this handles any non-array, not just classes.
-  @Deprecated // use binaryNameToType
-  // @InlineMe(
-  //     replacement = "BcelUtil.binaryNameToType(classname)",
-  //     imports = "org.plumelib.bcelutil.BcelUtil")
-  public static Type classnameToType(String classname) {
-    return binaryNameToType(classname);
-  }
-
-  /**
-   * Return the type corresponding to a given binary name or primitive type name.
+   * Returns the type corresponding to a given binary name or primitive type name.
    *
    * @param classname the binary name of a class (= fully-qualified name, except for inner classes),
    *     or a primitive type name, but not an array
@@ -766,10 +752,10 @@ public final class BcelUtil {
   }
 
   /**
-   * Return the type corresponding to a given fully-qualified binary name.
+   * Returns the type corresponding to a given fully-qualified binary name.
    *
-   * @param classname the fully-qualified binary name of a type, which uses "$" rather than "." for
-   *     nested classes
+   * @param classname the fully-qualified binary name of a type, which is like a
+   *     fully-qualified-name but uses "$" rather than "." for nested classes
    * @return the type corresponding to the given name
    */
   public static Type fqBinaryNameToType(@FqBinaryName String classname) {

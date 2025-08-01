@@ -1,15 +1,16 @@
 package org.plumelib.bcelutil;
 
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * A logging class with the following features:
+ * A logging class with the following features.
  *
  * <ul>
  *   <li>Can be enabled and disabled (when disabled, all operations are no-ops),
  *   <li>Can indent/exdent log output,
- *   <li>Writes to standard output, and
+ *   <li>Writes to a file or to standard output, and
  *   <li>Can provide a stack trace.
  * </ul>
  */
@@ -21,7 +22,8 @@ public final class SimpleLog {
   /** The current indentation level. */
   private int indentLevel = 0;
   /** Indentation string for one level of indentation. */
-  private final String INDENT_STR_ONE_LEVEL = "  ";
+  private static final String INDENT_STR_ONE_LEVEL = "  ";
+
   /**
    * Cache for the current indentation string, or null if needs to be recomputed. Never access this
    * directly; always call {@link #getIndentString}.
@@ -30,15 +32,15 @@ public final class SimpleLog {
   /** Cache of indentation strings that have been computed so far. */
   private List<String> indentStrings;
 
-  /** Create a new SimpleLog object with logging enabled. */
+  /** Create a new SimpleLog object with logging to standard out enabled. */
   public SimpleLog() {
     this(true);
   }
 
   /**
-   * Create a new SimpleLog object.
+   * Create a new SimpleLog object with logging to standard out.
    *
-   * @param enabled whether the logger starts out enabled
+   * @param enabled true if the logger starts out enabled
    */
   public SimpleLog(boolean enabled) {
     this.enabled = enabled;
@@ -47,16 +49,16 @@ public final class SimpleLog {
   }
 
   /**
-   * Return whether logging is enabled.
+   * Returns true if logging is enabled.
    *
-   * @return whether logging is enabled
+   * @return true if logging is enabled
    */
   public boolean enabled() {
     return enabled;
   }
 
   /**
-   * Log a message to System.out. The message is prepended with the current indentation string. The
+   * Log a message. The message is prepended with the current indentation string. The
    * indentation is only applied at the start of the message, not for every line break within the
    * message.
    *
@@ -70,23 +72,23 @@ public final class SimpleLog {
     }
   }
 
-  /** Print a stack trace to System.out. */
+  /** Print a stack trace to the log. */
   public void logStackTrace() {
     if (enabled) {
       Throwable t = new Throwable();
       t.fillInStackTrace();
-      StackTraceElement[] ste_arr = t.getStackTrace();
-      for (int ii = 2; ii < ste_arr.length; ii++) {
-        StackTraceElement ste = ste_arr[ii];
+      StackTraceElement[] stackTrace = t.getStackTrace();
+      for (int ii = 2; ii < stackTrace.length; ii++) {
+        StackTraceElement ste = stackTrace[ii];
         System.out.printf("%s  %s%n", getIndentString(), ste);
       }
     }
   }
 
   /**
-   * Return the current indentation string.
+   * Returns the current indentation string.
    *
-   * @return the current indentation string x
+   * @return the current indentation string
    */
   private String getIndentString() {
     assert enabled;

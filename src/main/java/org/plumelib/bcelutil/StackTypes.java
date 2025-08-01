@@ -17,13 +17,13 @@ public final class StackTypes {
    * The state of the operand stack at each instruction location. The instruction's byte code offset
    * is used as the index.
    */
-  OperandStack [] os_arr;
+  OperandStack [] operandStacks;
 
   /**
    * The state of the live local variables at each instruction location. The instruction's byte code
    * offset is used as the index.
    */
-  LocalVariables [] loc_arr;
+  LocalVariables [] localVariableses;
 
   /**
    * Create a record of the types on the stack at each instruction in a method. The created object
@@ -34,8 +34,8 @@ public final class StackTypes {
   public StackTypes(MethodGen mg) {
     InstructionList il = mg.getInstructionList();
     int size = (il == null) ? 0 : il.getEnd().getPosition();
-    os_arr = new OperandStack[size + 1];
-    loc_arr = new LocalVariables[size + 1];
+    operandStacks = new OperandStack[size + 1];
+    localVariableses = new LocalVariables[size + 1];
   }
 
   /**
@@ -50,8 +50,8 @@ public final class StackTypes {
     OperandStack os = f.getStack();
     // logger.info ("stack[" + offset + "] = " + toString(os));
 
-    loc_arr[offset] = (LocalVariables) f.getLocals().clone();
-    os_arr[offset] = (OperandStack) os.clone();
+    localVariableses[offset] = (LocalVariables) f.getLocals().clone();
+    operandStacks[offset] = (OperandStack) os.clone();
   }
 
   /**
@@ -61,7 +61,7 @@ public final class StackTypes {
    * @return the stack at the (instruction at the) given offset
    */
   public OperandStack get(int offset) {
-    return os_arr[offset];
+    return operandStacks[offset];
   }
 
   @SuppressWarnings({"allcheckers:purity", "lock"}) // local StringBuilder
@@ -70,11 +70,11 @@ public final class StackTypes {
 
     StringBuilder sb = new StringBuilder();
 
-    for (int i = 0; i < os_arr.length; i++) {
-      if (os_arr[i] != null) {
+    for (int i = 0; i < operandStacks.length; i++) {
+      if (operandStacks[i] != null) {
         sb.append(String.format("Instruction %d:\n", i));
-        sb.append(String.format("  stack:  %s\n", toString(os_arr[i])));
-        sb.append(String.format("  locals: %s\n", toString(loc_arr[i])));
+        sb.append(String.format("  stack:  %s\n", toString(operandStacks[i])));
+        sb.append(String.format("  locals: %s\n", toString(localVariableses[i])));
       }
     }
 
@@ -82,7 +82,7 @@ public final class StackTypes {
   }
 
   /**
-   * Return a printed representation of the given OperandStack.
+   * Returns a printed representation of the given OperandStack.
    *
    * @param os the OperandStack to print
    * @return a printed representation of {@code os}
@@ -92,7 +92,9 @@ public final class StackTypes {
     String buff = "";
 
     for (int i = 0; i < os.size(); i++) {
-      if (buff.length() > 0) buff += ", ";
+      if (buff.length() > 0) {
+        buff += ", ";
+      }
       Type t = os.peek(i);
       if (t instanceof UninitializedObjectType) {
         buff += "uninitialized-object";
@@ -105,7 +107,7 @@ public final class StackTypes {
   }
 
   /**
-   * Return a printed representation of the given LocalVariables.
+   * Returns a printed representation of the given LocalVariables.
    *
    * @param lv the LocalVariablesStack to print
    * @return a printed representation of {@code lv}
@@ -115,7 +117,9 @@ public final class StackTypes {
     String buff = "";
 
     for (int i = 0; i < lv.maxLocals(); i++) {
-      if (buff.length() > 0) buff += ", ";
+      if (buff.length() > 0) {
+        buff += ", ";
+      }
       Type t = lv.get(i);
       if (t instanceof UninitializedObjectType) {
         buff += "uninitialized-object";

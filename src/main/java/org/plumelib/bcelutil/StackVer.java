@@ -17,6 +17,7 @@
  *  limitations under the License.
  *
  */
+
 package org.plumelib.bcelutil;
 
 import java.io.PrintWriter;
@@ -57,9 +58,7 @@ import org.apache.bcel.verifier.structurals.UninitializedObjectType;
  * each byte code instruction.
  *
  * <p>To see the diffs, you will need a git clone of git@github.com:apache/commons-bcel.git. The
- * particular version StackVer is based on can be retrieved with<code>
- * git show e6dcacb9ca1d:src/main/java/org/apache/bcel/verifier/structurals/Pass3bVerifier.java
- * </code> then run google-java-format on the downloaded file.
+ * particular version StackVer is based on can be retrieved with{@code git show e6dcacb9ca1d:src/main/java/org/apache/bcel/verifier/structurals/Pass3bVerifier.java} then run google-java-format on the downloaded file.
  *
  * <p>The original documentation follows.
  *
@@ -106,7 +105,7 @@ public final class StackVer {
     /**
      * Tests if InstructionContext queue is empty.
      *
-     * @return true if the InstructionContext queue is empty.
+     * @return true if the InstructionContext queue is empty
      */
     public boolean isEmpty() {
       return ics.isEmpty();
@@ -182,7 +181,7 @@ public final class StackVer {
   }
 
   /**
-   * Return the types on the stack at each byte code offset. Only valid after do_stack_ver() is
+   * Returns the types on the stack at each byte code offset. Only valid after do_stack_ver() is
    * called.
    *
    * @return the StackTypes object for the method being verified

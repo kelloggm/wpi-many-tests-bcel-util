@@ -1,6 +1,5 @@
 package org.plumelib.bcelutil;
 
-// import com.google.errorprone.annotations.InlineMe;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -74,84 +73,84 @@ public abstract class StackMapUtils {
   protected ConstantPoolGen pool = null;
 
   /** A log to which to print debugging information about program instrumentation. */
-  protected SimpleLog debug_instrument = new SimpleLog(false);
+  protected SimpleLog debugInstrument = new SimpleLog(false);
 
-  /** Whether or not the current method needs a StackMap; set by set_current_stack_map_table. */
+  /** True if the current method needs a StackMap; set by setCurrentStackMapTable. */
   protected boolean needStackMap = false;
 
-  /** Working copy of StackMapTable; set by set_current_stack_map_table. */
-  protected StackMapEntry [] stack_map_table = null;
+  /** Working copy of StackMapTable; set by setCurrentStackMapTable. */
+  protected StackMapEntry [] stackMapTable = null;
 
-  /** Original stack map table attribute; set by set_current_stack_map_table. */
+  /** Original stack map table attribute; set by setCurrentStackMapTable. */
   protected StackMap smta = null;
 
   /** Initial state of StackMapTypes for locals on method entry. */
-  protected StackMapType [] initial_type_list;
+  protected StackMapType [] initialTypeList;
 
   /** The number of local variables in the current method prior to any modifications. */
-  protected int initial_locals_count;
+  protected int initialLocalsCount;
 
   /**
    * A number of methods in this class search and locate a particular StackMap within the current
    * method. This variable contains the number of live local variables within the range of byte code
-   * instructions covered by this StackMap. Set by update_stack_map_offset, find_stack_map_equal,
-   * find_stack_map_index_before, or find_stack_map_index_after.
+   * instructions covered by this StackMap. Set by updateStackMapOffset, findStackMapEqual,
+   * findStackMapIndexBefore, or findStackMapIndexAfter.
    */
-  protected int number_active_locals;
+  protected int numberActiveLocals;
 
   /**
    * Offset into code that corresponds to the current StackMap of interest. Set by
-   * find_stack_map_index_before.
+   * findStackMapIndexBefore.
    */
-  protected int running_offset;
+  protected int runningOffset;
 
   /**
    * The index of the first 'true' local in the local variable table. That is, after 'this' and any
    * parameters.
    */
-  protected int first_local_index;
+  protected int firstLocalIndex;
 
   /** An empty StackMap used for initialization. */
   @SuppressWarnings("interning") // @InternedDistinct initalization with fresh object
-  private StackMapEntry @InternedDistinct [] empty_stack_map_table = {};
+  private StackMapEntry @InternedDistinct [] emptyStackmaptable = {};
 
   /**
    * A map from instructions that create uninitialized NEW objects to the corresponding StackMap
-   * entry. Set by build_unitialized_NEW_map.
+   * entry. Set by buildUninitializedNewMap.
    */
-  private Map<InstructionHandle, Integer> uninitialized_NEW_map = new HashMap<>();
+  private Map<InstructionHandle, Integer> uninitializedNewMap = new HashMap<>();
 
   /**
-   * Returns a String array with new_string added to the end of arr.
+   * Returns a String array with newString added to the end of arr.
    *
    * @param arr original string array
-   * @param new_string string to be added
+   * @param newString string to be added
    * @return the new string array
    */
-  protected String[] add_string(String[] arr, String new_string) {
-    String[] new_arr = new String[arr.length + 1];
+  protected String[] addString(String[] arr, String newString) {
+    String[] newArr = new String[arr.length + 1];
     for (int ii = 0; ii < arr.length; ii++) {
-      new_arr[ii] = arr[ii];
+      newArr[ii] = arr[ii];
     }
-    new_arr[arr.length] = new_string;
-    return new_arr;
+    newArr[arr.length] = newString;
+    return newArr;
   }
 
   /**
-   * Return the attribute name for the specified attribute.
+   * Returns the attribute name for the specified attribute.
    *
    * @param a the attribute
    * @return the attribute name for the specified attribute
    */
   protected final String get_attribute_name(Attribute a) {
-    int con_index = a.getNameIndex();
-    Constant c = pool.getConstant(con_index);
-    String att_name = ((ConstantUtf8) c).getBytes();
-    return att_name;
+    int conIndex = a.getNameIndex();
+    Constant c = pool.getConstant(conIndex);
+    String attName = ((ConstantUtf8) c).getBytes();
+    return attName;
   }
 
   /**
-   * Returns whether or not the specified attribute is a LocalVariableTypeTable.
+   * Returns true if the specified attribute is a LocalVariableTypeTable.
    *
    * @param a the attribute
    * @return true iff the attribute is a LocalVariableTypeTable
@@ -161,12 +160,12 @@ public abstract class StackMapUtils {
   }
 
   /**
-   * Returns whether or not the specified attribute is a StackMapTable.
+   * Returns true if the specified attribute is a StackMapTable.
    *
    * @param a the attribute
    * @return true iff the attribute is a StackMapTable
    */
-  protected final boolean is_stack_map_table(Attribute a) {
+  protected final boolean isStackMapTable(Attribute a) {
     return get_attribute_name(a).equals("StackMapTable");
   }
 
@@ -176,9 +175,9 @@ public abstract class StackMapUtils {
    * @param mgen the method
    * @return the StackMapTable attribute for the method (or null if not present)
    */
-  protected final Attribute get_stack_map_table_attribute(MethodGen mgen) {
+  protected final Attribute getStackMapTable_attribute(MethodGen mgen) {
     for (Attribute a : mgen.getCodeAttributes()) {
-      if (is_stack_map_table(a)) {
+      if (isStackMapTable(a)) {
         return a;
       }
     }
@@ -213,19 +212,19 @@ public abstract class StackMapUtils {
 
   /**
    * We have inserted additional byte(s) into the instruction list; update the StackMaps, if
-   * required. Also sets running_offset.
+   * required. Also sets runningOffset.
    *
    * @param position the location of insertion
    * @param delta the size of the insertion
    */
-  protected final void update_stack_map_offset(int position, int delta) {
+  protected final void updateStackMapOffset(int position, int delta) {
 
-    running_offset = -1; // no +1 on first entry
-    for (int i = 0; i < stack_map_table.length; i++) {
-      running_offset = stack_map_table[i].getByteCodeOffset() + running_offset + 1;
+    runningOffset = -1; // no +1 on first entry
+    for (int i = 0; i < stackMapTable.length; i++) {
+      runningOffset = stackMapTable[i].getByteCodeOffset() + runningOffset + 1;
 
-      if (running_offset > position) {
-        stack_map_table[i].updateByteCodeOffset(delta);
+      if (runningOffset > position) {
+        stackMapTable[i].updateByteCodeOffset(delta);
         // Only update the first StackMap that occurs after the given
         // offset as map offsets are relative to previous map entry.
         return;
@@ -234,23 +233,23 @@ public abstract class StackMapUtils {
   }
 
   /**
-   * Find the StackMap entry whose offset matches the input argument. Also sets running_offset.
+   * Find the StackMap entry whose offset matches the input argument. Also sets runningOffset.
    *
    * @param offset byte code offset
    * @return the corresponding StackMapEntry
    */
-  protected final StackMapEntry find_stack_map_equal(int offset) {
+  protected final StackMapEntry findStackMapEqual(int offset) {
 
-    running_offset = -1; // no +1 on first entry
-    for (int i = 0; i < stack_map_table.length; i++) {
-      running_offset = stack_map_table[i].getByteCodeOffset() + running_offset + 1;
+    runningOffset = -1; // no +1 on first entry
+    for (int i = 0; i < stackMapTable.length; i++) {
+      runningOffset = stackMapTable[i].getByteCodeOffset() + runningOffset + 1;
 
-      if (running_offset > offset) {
+      if (runningOffset > offset) {
         throw new RuntimeException("Invalid StackMap offset 1");
       }
 
-      if (running_offset == offset) {
-        return stack_map_table[i];
+      if (runningOffset == offset) {
+        return stackMapTable[i];
       }
       // try next map entry
     }
@@ -261,62 +260,62 @@ public abstract class StackMapUtils {
 
   /**
    * Find the index of the StackMap entry whose offset is the last one before the input argument.
-   * Return -1 if there isn't one. Also sets running_offset and number_active_locals.
+   * Return -1 if there isn't one. Also sets runningOffset and numberActiveLocals.
    *
    * @param offset byte code offset
    * @return the corresponding StackMapEntry index
    */
-  protected final int find_stack_map_index_before(int offset) {
+  protected final int findStackMapIndexBefore(int offset) {
 
-    number_active_locals = initial_locals_count;
-    running_offset = -1; // no +1 on first entry
-    for (int i = 0; i < stack_map_table.length; i++) {
-      running_offset = running_offset + stack_map_table[i].getByteCodeOffset() + 1;
-      if (running_offset >= offset) {
+    numberActiveLocals = initialLocalsCount;
+    runningOffset = -1; // no +1 on first entry
+    for (int i = 0; i < stackMapTable.length; i++) {
+      runningOffset = runningOffset + stackMapTable[i].getByteCodeOffset() + 1;
+      if (runningOffset >= offset) {
         if (i == 0) {
           // reset offset to previous
-          running_offset = -1;
+          runningOffset = -1;
           return -1;
         } else {
           // back up offset to previous
-          running_offset = running_offset - stack_map_table[i].getByteCodeOffset() - 1;
+          runningOffset = runningOffset - stackMapTable[i].getByteCodeOffset() - 1;
           // return previous
           return i - 1;
         }
       }
 
       // Update number of active locals based on this StackMap entry.
-      int frame_type = stack_map_table[i].getFrameType();
-      if (frame_type >= Const.APPEND_FRAME && frame_type <= Const.APPEND_FRAME_MAX) {
-        number_active_locals += frame_type - 251;
-      } else if (frame_type >= Const.CHOP_FRAME && frame_type <= Const.CHOP_FRAME_MAX) {
-        number_active_locals -= 251 - frame_type;
-      } else if (frame_type == Const.FULL_FRAME) {
-        number_active_locals = stack_map_table[i].getNumberOfLocals();
+      int frameType = stackMapTable[i].getFrameType();
+      if (frameType >= Const.APPEND_FRAME && frameType <= Const.APPEND_FRAME_MAX) {
+        numberActiveLocals += frameType - 251;
+      } else if (frameType >= Const.CHOP_FRAME && frameType <= Const.CHOP_FRAME_MAX) {
+        numberActiveLocals -= 251 - frameType;
+      } else if (frameType == Const.FULL_FRAME) {
+        numberActiveLocals = stackMapTable[i].getNumberOfLocals();
       }
-      // All other frame_types do not modify locals.
+      // All other frameTypes do not modify locals.
     }
 
-    if (stack_map_table.length == 0) {
+    if (stackMapTable.length == 0) {
       return -1;
     } else {
-      return stack_map_table.length - 1;
+      return stackMapTable.length - 1;
     }
   }
 
   /**
    * Find the index of the StackMap entry whose offset is the first one after the input argument.
-   * Return -1 if there isn't one. Also sets running_offset.
+   * Return -1 if there isn't one. Also sets runningOffset.
    *
    * @param offset byte code offset
    * @return the corresponding StackMapEntry index
    */
-  protected final int find_stack_map_index_after(int offset) {
+  protected final int findStackMapIndexAfter(int offset) {
 
-    running_offset = -1; // no +1 on first entry
-    for (int i = 0; i < stack_map_table.length; i++) {
-      running_offset = running_offset + stack_map_table[i].getByteCodeOffset() + 1;
-      if (running_offset > offset) {
+    runningOffset = -1; // no +1 on first entry
+    for (int i = 0; i < stackMapTable.length; i++) {
+      runningOffset = runningOffset + stackMapTable[i].getByteCodeOffset() + 1;
+      if (runningOffset > offset) {
         return i;
       }
       // try next map entry
@@ -334,7 +333,7 @@ public abstract class StackMapUtils {
    * @param ih where to start looking for a switch instruction
    * @param il instruction list to search
    */
-  protected final void modify_stack_maps_for_switches(InstructionHandle ih, InstructionList il) {
+  protected final void modifyStackMapsForSwitches(InstructionHandle ih, InstructionList il) {
     Instruction inst;
     short opcode;
 
@@ -351,15 +350,15 @@ public abstract class StackMapUtils {
       opcode = inst.getOpcode();
 
       if (opcode == Const.TABLESWITCH || opcode == Const.LOOKUPSWITCH) {
-        int current_offset = ih.getPosition();
-        int index = find_stack_map_index_after(current_offset);
+        int currentOffset = ih.getPosition();
+        int index = findStackMapIndexAfter(currentOffset);
         if (index == -1) {
           throw new RuntimeException("Invalid StackMap offset 3");
         }
-        StackMapEntry stack_map = stack_map_table[index];
-        int delta = (current_offset + inst.getLength()) - running_offset;
+        StackMapEntry stackMap = stackMapTable[index];
+        int delta = (currentOffset + inst.getLength()) - runningOffset;
         if (delta != 0) {
-          stack_map.updateByteCodeOffset(delta);
+          stackMap.updateByteCodeOffset(delta);
         }
         // Since StackMap offsets are relative to the previous one
         // we only have to do the first one after a switch.
@@ -392,60 +391,60 @@ public abstract class StackMapUtils {
     LocalVariableGen new_lvg;
     int min_size = 3; // only sizes are 1 or 2; start with something larger.
 
-    number_active_locals = initial_locals_count;
-    StackMapType[] types_of_active_locals = new StackMapType[number_active_locals];
-    for (int ii = 0; ii < number_active_locals; ii++) {
-      types_of_active_locals[ii] = initial_type_list[ii];
-      locals_offset_height += getSize(initial_type_list[ii]);
+    numberActiveLocals = initialLocalsCount;
+    StackMapType[] types_of_active_locals = new StackMapType[numberActiveLocals];
+    for (int ii = 0; ii < numberActiveLocals; ii++) {
+      types_of_active_locals[ii] = initialTypeList[ii];
+      locals_offset_height += getSize(initialTypeList[ii]);
     }
 
     // update state for each StackMap entry
-    for (StackMapEntry smte : stack_map_table) {
-      int frame_type = smte.getFrameType();
+    for (StackMapEntry smte : stackMapTable) {
+      int frameType = smte.getFrameType();
       byte_code_offset += smte.getByteCodeOffset() + 1;
 
-      if (frame_type >= Const.APPEND_FRAME && frame_type <= Const.APPEND_FRAME_MAX) {
-        // number to append is frame_type - 251
+      if (frameType >= Const.APPEND_FRAME && frameType <= Const.APPEND_FRAME_MAX) {
+        // number to append is frameType - 251
         types_of_active_locals =
-            Arrays.copyOf(types_of_active_locals, number_active_locals + frame_type - 251);
+            Arrays.copyOf(types_of_active_locals, numberActiveLocals + frameType - 251);
         for (StackMapType smt : smte.getTypesOfLocals()) {
-          types_of_active_locals[number_active_locals++] = smt;
+          types_of_active_locals[numberActiveLocals++] = smt;
           locals_offset_height += getSize(smt);
         }
-      } else if (frame_type >= Const.CHOP_FRAME && frame_type <= Const.CHOP_FRAME_MAX) {
-        int number_to_chop = 251 - frame_type;
+      } else if (frameType >= Const.CHOP_FRAME && frameType <= Const.CHOP_FRAME_MAX) {
+        int number_to_chop = 251 - frameType;
         while (number_to_chop > 0) {
-          locals_offset_height -= getSize(types_of_active_locals[--number_active_locals]);
+          locals_offset_height -= getSize(types_of_active_locals[--numberActiveLocals]);
           number_to_chop--;
         }
-        types_of_active_locals = Arrays.copyOf(types_of_active_locals, number_active_locals);
-      } else if (frame_type == Const.FULL_FRAME) {
+        types_of_active_locals = Arrays.copyOf(types_of_active_locals, numberActiveLocals);
+      } else if (frameType == Const.FULL_FRAME) {
         locals_offset_height = 0;
-        number_active_locals = 0;
+        numberActiveLocals = 0;
         types_of_active_locals = new StackMapType[smte.getNumberOfLocals()];
         for (StackMapType smt : smte.getTypesOfLocals()) {
-          types_of_active_locals[number_active_locals++] = smt;
+          types_of_active_locals[numberActiveLocals++] = smt;
           locals_offset_height += getSize(smt);
         }
       }
-      // all other frame_types do not modify locals.
+      // all other frameTypes do not modify locals.
 
       // System.out.printf("byte_code_offset: %d, temp offset: %d, locals_offset_height: %d,
-      // number_active_locals: %d, local types: %s%n",
-      //       byte_code_offset, offset, locals_offset_height, number_active_locals,
+      // numberActiveLocals: %d, local types: %s%n",
+      //       byte_code_offset, offset, locals_offset_height, numberActiveLocals,
       // Arrays.toString(types_of_active_locals));
 
       if (live_start == 0) {
         // did the latest StackMap entry define the temp in question?
         if (offset < locals_offset_height) {
           live_start = byte_code_offset;
-          int running_offset = 0;
+          int runningOffset = 0;
           for (StackMapType smt : types_of_active_locals) {
-            if (running_offset == offset) {
+            if (runningOffset == offset) {
               live_type = generate_Type_from_StackMapType(smt);
               break;
             }
-            running_offset += getSize(smt);
+            runningOffset += getSize(smt);
           }
           if (live_type == null) {
             // No matching offset in stack maps so this offset must be
@@ -464,7 +463,7 @@ public abstract class StackMapUtils {
                   offset,
                   il.findHandle(live_start),
                   il.findHandle(byte_code_offset));
-          debug_instrument.log(
+          debugInstrument.log(
               "Added local  %s, %d, %d : %s, %s%n",
               new_lvg.getIndex(),
               new_lvg.getStart().getPosition(),
@@ -485,7 +484,7 @@ public abstract class StackMapUtils {
       new_lvg =
           mgen.addLocalVariable(
               "DaIkOnTeMp" + offset, live_type, offset, il.findHandle(live_start), null);
-      debug_instrument.log(
+      debugInstrument.log(
           "Added local  %s, %d, %d : %s, %s%n",
           new_lvg.getIndex(),
           new_lvg.getStart().getPosition(),
@@ -507,7 +506,7 @@ public abstract class StackMapUtils {
         new_lvg =
             mgen.addLocalVariable(
                 "DaIkOnTeMp" + offset, Type.OBJECT, offset, il.findHandle(byte_code_offset), null);
-        debug_instrument.log(
+        debugInstrument.log(
             "Added local  %s, %d, %d : %s, %s%n",
             new_lvg.getIndex(),
             new_lvg.getStart().getPosition(),
@@ -528,24 +527,24 @@ public abstract class StackMapUtils {
    *
    * @param il instruction list to search
    */
-  protected final void build_unitialized_NEW_map(InstructionList il) {
+  protected final void buildUninitializedNewMap(InstructionList il) {
 
-    uninitialized_NEW_map.clear();
+    uninitializedNewMap.clear();
     il.setPositions();
 
-    for (StackMapEntry smte : stack_map_table) {
-      int frame_type = smte.getFrameType();
+    for (StackMapEntry smte : stackMapTable) {
+      int frameType = smte.getFrameType();
 
-      if ((frame_type >= Const.SAME_LOCALS_1_STACK_ITEM_FRAME
-              && frame_type <= Const.SAME_LOCALS_1_STACK_ITEM_FRAME_EXTENDED)
-          || (frame_type >= Const.APPEND_FRAME && frame_type <= Const.APPEND_FRAME_MAX)
-          || (frame_type == Const.FULL_FRAME)) {
+      if ((frameType >= Const.SAME_LOCALS_1_STACK_ITEM_FRAME
+              && frameType <= Const.SAME_LOCALS_1_STACK_ITEM_FRAME_EXTENDED)
+          || (frameType >= Const.APPEND_FRAME && frameType <= Const.APPEND_FRAME_MAX)
+          || (frameType == Const.FULL_FRAME)) {
 
         if (smte.getNumberOfLocals() > 0) {
           for (StackMapType smt : smte.getTypesOfLocals()) {
             if (smt.getType() == Const.ITEM_NewObject) {
               int i = smt.getIndex();
-              uninitialized_NEW_map.put(il.findHandle(i), i);
+              uninitializedNewMap.put(il.findHandle(i), i);
             }
           }
         }
@@ -553,7 +552,7 @@ public abstract class StackMapUtils {
           for (StackMapType smt : smte.getTypesOfStackItems()) {
             if (smt.getType() == Const.ITEM_NewObject) {
               int i = smt.getIndex();
-              uninitialized_NEW_map.put(il.findHandle(i), i);
+              uninitializedNewMap.put(il.findHandle(i), i);
             }
           }
         }
@@ -569,15 +568,15 @@ public abstract class StackMapUtils {
    * @param old_offset original location of NEW instruction
    * @param new_offset new location of NEW instruction
    */
-  private final void update_NEW_object_stack_map_entries(int old_offset, int new_offset) {
+  private final void update_NEW_object_stackMap_entries(int old_offset, int new_offset) {
 
-    for (StackMapEntry smte : stack_map_table) {
-      int frame_type = smte.getFrameType();
+    for (StackMapEntry smte : stackMapTable) {
+      int frameType = smte.getFrameType();
 
-      if ((frame_type >= Const.SAME_LOCALS_1_STACK_ITEM_FRAME
-              && frame_type <= Const.SAME_LOCALS_1_STACK_ITEM_FRAME_EXTENDED)
-          || (frame_type >= Const.APPEND_FRAME && frame_type <= Const.APPEND_FRAME_MAX)
-          || (frame_type == Const.FULL_FRAME)) {
+      if ((frameType >= Const.SAME_LOCALS_1_STACK_ITEM_FRAME
+              && frameType <= Const.SAME_LOCALS_1_STACK_ITEM_FRAME_EXTENDED)
+          || (frameType >= Const.APPEND_FRAME && frameType <= Const.APPEND_FRAME_MAX)
+          || (frameType == Const.FULL_FRAME)) {
 
         if (smte.getNumberOfLocals() > 0) {
           for (StackMapType smt : smte.getTypesOfLocals()) {
@@ -611,12 +610,12 @@ public abstract class StackMapUtils {
 
     il.setPositions();
 
-    for (Map.Entry<InstructionHandle, Integer> e : uninitialized_NEW_map.entrySet()) {
+    for (Map.Entry<InstructionHandle, Integer> e : uninitializedNewMap.entrySet()) {
       InstructionHandle ih = e.getKey();
       int old_offset = e.getValue().intValue();
       int new_offset = ih.getPosition();
       if (old_offset != new_offset) {
-        update_NEW_object_stack_map_entries(old_offset, new_offset);
+        update_NEW_object_stackMap_entries(old_offset, new_offset);
         e.setValue(new_offset);
       }
     }
@@ -658,95 +657,95 @@ public abstract class StackMapUtils {
       int delta = inst.getLength() - orig_length;
       if (delta > 0) {
         il.setPositions();
-        update_stack_map_offset(ih.getPosition(), delta);
-        modify_stack_maps_for_switches(ih, il);
+        updateStackMapOffset(ih.getPosition(), delta);
+        modifyStackMapsForSwitches(ih, il);
       }
     }
   }
 
   /**
-   * Get existing StackMapTable from the MethodGen argument. If there is none, create a new empty
-   * one. Sets both smta and stack_map_table. Must be called prior to any other methods that
-   * manipulate the stack_map_table!
+   * Returns existing StackMapTable from the MethodGen argument. If there is none, create a new empty
+   * one. Sets both smta and stackMapTable. Must be called prior to any other methods that
+   * manipulate the stackMapTable!
    *
    * @param mgen MethodGen to search
-   * @param java_class_version Java version for the classfile; stack_map_table is optional before
+   * @param java_class_version Java version for the classfile; stackMapTable is optional before
    *     Java 1.7 (= classfile version 51)
-   * @deprecated use {@link #set_current_stack_map_table}
+   * @deprecated use {@link #setCurrentStackMapTable}
    */
-  @Deprecated // use set_current_stack_map_table() */
-  // @InlineMe(replacement = "this.set_current_stack_map_table(mgen, java_class_version)")
-  protected final void fetch_current_stack_map_table(MethodGen mgen, int java_class_version) {
-    set_current_stack_map_table(mgen, java_class_version);
+  @Deprecated // use setCurrentStackMapTable() */
+  // @InlineMe(replacement = "this.setCurrentStackMapTable(mgen, java_class_version)")
+  protected final void fetch_current_stackMapTable(MethodGen mgen, int java_class_version) {
+    setCurrentStackMapTable(mgen, java_class_version);
   }
 
   /**
-   * Get existing StackMapTable from the MethodGen argument. If there is none, create a new empty
-   * one. Sets both smta and stack_map_table. Must be called prior to any other methods that
-   * manipulate the stack_map_table!
+   * Returns existing StackMapTable from the MethodGen argument. If there is none, create a new empty
+   * one. Sets both smta and stackMapTable. Must be called prior to any other methods that
+   * manipulate the stackMapTable!
    *
    * @param mgen MethodGen to search
-   * @param java_class_version Java version for the classfile; stack_map_table is optional before
+   * @param java_class_version Java version for the classfile; stackMapTable is optional before
    *     Java 1.7 (= classfile version 51)
    */
-  protected final void set_current_stack_map_table(MethodGen mgen, int java_class_version) {
+  protected final void setCurrentStackMapTable(MethodGen mgen, int java_class_version) {
 
     needStackMap = false;
-    smta = (StackMap) get_stack_map_table_attribute(mgen);
+    smta = (StackMap) getStackMapTable_attribute(mgen);
     if (smta != null) {
       // get a deep copy of the original StackMapTable.
-      stack_map_table = ((StackMap) smta.copy(smta.getConstantPool())).getStackMap();
+      stackMapTable = ((StackMap) smta.copy(smta.getConstantPool())).getStackMap();
       needStackMap = true;
 
-      debug_instrument.log(
+      debugInstrument.log(
           "Attribute tag: %s length: %d nameIndex: %d%n",
           smta.getTag(), smta.getLength(), smta.getNameIndex());
       // Delete existing stack map - we'll add a new one later.
       mgen.removeCodeAttribute(smta);
     } else {
-      stack_map_table = empty_stack_map_table;
+      stackMapTable = emptyStackmaptable;
       if (java_class_version > Const.MAJOR_1_6) {
         needStackMap = true;
       }
     }
-    print_stack_map_table("Original");
+    printStackMapTable("Original");
   }
 
   /**
-   * Print the contents of the StackMapTable to the debug_instrument.log.
+   * Print the contents of the StackMapTable to the debugInstrument.log.
    *
    * @param prefix label to display with table
    */
-  protected final void print_stack_map_table(String prefix) {
+  protected final void printStackMapTable(String prefix) {
 
-    debug_instrument.log("%nStackMap(%s) %s items:%n", prefix, stack_map_table.length);
-    running_offset = -1; // no +1 on first entry
-    for (int i = 0; i < stack_map_table.length; i++) {
-      running_offset = stack_map_table[i].getByteCodeOffset() + running_offset + 1;
-      debug_instrument.log("@%03d %s %n", running_offset, stack_map_table[i]);
+    debugInstrument.log("%nStackMap(%s) %s items:%n", prefix, stackMapTable.length);
+    runningOffset = -1; // no +1 on first entry
+    for (int i = 0; i < stackMapTable.length; i++) {
+      runningOffset = stackMapTable[i].getByteCodeOffset() + runningOffset + 1;
+      debugInstrument.log("@%03d %s %n", runningOffset, stackMapTable[i]);
     }
   }
 
   /**
-   * Create a new StackMap code attribute from stack_map_table.
+   * Create a new StackMap code attribute from stackMapTable.
    *
    * @param mgen MethodGen to add attribute to
    * @throws IOException if cannot create the attribute
    */
-  protected final void create_new_stack_map_attribute(MethodGen mgen) throws IOException {
+  protected final void create_new_stackMap_attribute(MethodGen mgen) throws IOException {
 
     if (!needStackMap) {
       return;
     }
-    if (stack_map_table == empty_stack_map_table) {
+    if (stackMapTable == emptyStackmaptable) {
       return;
     }
-    print_stack_map_table("Final");
+    printStackMapTable("Final");
 
     // Build new StackMapTable attribute
     StackMap map_table =
         new StackMap(pool.addUtf8("StackMapTable"), 0, null, pool.getConstantPool());
-    map_table.setStackMap(stack_map_table);
+    map_table.setStackMap(stackMapTable);
     mgen.addCodeAttribute(map_table);
   }
 
@@ -774,10 +773,10 @@ public abstract class StackMapUtils {
   /**
    * Convert a Type to a StackMapType.
    *
-   * @param t Type to be converted
+   * @param t type to be converted
    * @return result StackMapType
    */
-  protected final StackMapType generate_StackMapType_from_Type(Type t) {
+  protected final StackMapType generateStackMapTypeFromType(Type t) {
 
     switch (t.getType()) {
       case Const.T_BOOLEAN:
@@ -834,7 +833,7 @@ public abstract class StackMapUtils {
   }
 
   /**
-   * Return the operand size of this type (2 for long and double, 1 otherwise).
+   * Returns the operand size of this type (2 for long and double, 1 otherwise).
    *
    * @param smt a StackMapType object
    * @return the operand size of this type
@@ -857,16 +856,16 @@ public abstract class StackMapUtils {
    * @param type_new_var type of new variable we are adding
    * @param locals a copy of the local variable table prior to this modification
    */
-  protected final void update_full_frame_stack_map_entries(
+  protected final void update_full_frame_stackMap_entries(
       int offset, Type type_new_var, LocalVariableGen[] locals) {
     int index; // locals index
 
-    for (int i = 0; i < stack_map_table.length; i++) {
-      if (stack_map_table[i].getFrameType() == Const.FULL_FRAME) {
+    for (int i = 0; i < stackMapTable.length; i++) {
+      if (stackMapTable[i].getFrameType() == Const.FULL_FRAME) {
 
-        int num_locals = stack_map_table[i].getNumberOfLocals();
+        int num_locals = stackMapTable[i].getNumberOfLocals();
         StackMapType[] new_local_types = new StackMapType[num_locals + 1];
-        StackMapType[] old_local_types = stack_map_table[i].getTypesOfLocals();
+        StackMapType[] old_local_types = stackMapTable[i].getTypesOfLocals();
 
         // System.out.printf ("update_full_frame %s %s %s %n", offset, num_locals, locals.length);
 
@@ -881,13 +880,13 @@ public abstract class StackMapUtils {
           }
           new_local_types[index] = old_local_types[index];
         }
-        new_local_types[index++] = generate_StackMapType_from_Type(type_new_var);
+        new_local_types[index++] = generateStackMapTypeFromType(type_new_var);
         while (index <= num_locals) {
           new_local_types[index] = old_local_types[index - 1];
           index++;
         }
 
-        stack_map_table[i].setTypesOfLocals(new_local_types);
+        stackMapTable[i].setTypesOfLocals(new_local_types);
       }
     }
   }
@@ -965,13 +964,13 @@ public abstract class StackMapUtils {
       arg_new = mgen.addLocalVariable(arg_name, arg_type, new_offset, null, null);
 
       // Update the index of the first 'true' local in the local variable table.
-      first_local_index++;
+      firstLocalIndex++;
     }
-    initial_locals_count++;
+    initialLocalsCount++;
 
     // Update the method's parameter information.
     arg_types = BcelUtil.postpendToArray(arg_types, arg_type);
-    String[] arg_names = add_string(mgen.getArgumentNames(), arg_name);
+    String[] arg_names = addString(mgen.getArgumentNames(), arg_name);
     mgen.setArgumentTypes(arg_types);
     mgen.setArgumentNames(arg_names);
 
@@ -983,7 +982,7 @@ public abstract class StackMapUtils {
       }
       mgen.setMaxLocals(mgen.getMaxLocals() + arg_type.getSize());
 
-      debug_instrument.log(
+      debugInstrument.log(
           "Added arg    %s%n",
           arg_new.getIndex() + ": " + arg_new.getName() + ", " + arg_new.getType());
 
@@ -995,9 +994,9 @@ public abstract class StackMapUtils {
 
       // Finally, we need to update any FULL_FRAME StackMap entries to
       // add in the new local variable type.
-      update_full_frame_stack_map_entries(new_offset, arg_type, locals);
+      update_full_frame_stackMap_entries(new_offset, arg_type, locals);
 
-      debug_instrument.log("New LocalVariableTable:%n%s%n", mgen.getLocalVariableTable(pool));
+      debugInstrument.log("New LocalVariableTable:%n%s%n", mgen.getLocalVariableTable(pool));
     }
     return arg_new;
   }
@@ -1046,7 +1045,7 @@ public abstract class StackMapUtils {
 
     for (i = 0; i < locals.length; i++) {
       LocalVariableGen lv = locals[i];
-      if (i >= first_local_index) {
+      if (i >= firstLocalIndex) {
         if (lv.getStart().getPosition() != 0) {
           if (new_offset == -1) {
             if (compiler_temp_i != -1) {
@@ -1106,7 +1105,7 @@ public abstract class StackMapUtils {
       mgen.setMaxLocals(mgen.getMaxLocals() + local_type.getSize());
     }
 
-    debug_instrument.log(
+    debugInstrument.log(
         "Added local  %s%n", lv_new.getIndex() + ": " + lv_new.getName() + ", " + lv_new.getType());
 
     // Now process the instruction list, adding one to the offset
@@ -1117,9 +1116,9 @@ public abstract class StackMapUtils {
 
     // Finally, we need to update any FULL_FRAME StackMap entries to
     // add in the new local variable type.
-    update_full_frame_stack_map_entries(new_offset, local_type, locals);
+    update_full_frame_stackMap_entries(new_offset, local_type, locals);
 
-    debug_instrument.log("New LocalVariableTable:%n%s%n", mgen.getLocalVariableTable(pool));
+    debugInstrument.log("New LocalVariableTable:%n%s%n", mgen.getLocalVariableTable(pool));
     return lv_new;
   }
 
@@ -1148,7 +1147,7 @@ public abstract class StackMapUtils {
     InstructionList il = mgen.getInstructionList();
     if (il == null) {
       // no code so nothing to do
-      first_local_index = 0;
+      firstLocalIndex = 0;
       return;
     }
 
@@ -1184,18 +1183,18 @@ public abstract class StackMapUtils {
     // Determine the first 'true' local index into the local variables.
     // The object 'this' pointer and the parameters form the first n
     // entries in the list.
-    first_local_index = arg_types.length;
+    firstLocalIndex = arg_types.length;
 
     if (!mgen.isStatic()) {
       // Add the 'this' pointer back in.
       l = locals[0];
       new_lvg = mgen.addLocalVariable(l.getName(), l.getType(), l.getIndex(), null, null);
-      debug_instrument.log(
+      debugInstrument.log(
           "Added <this> %s%n",
           new_lvg.getIndex() + ": " + new_lvg.getName() + ", " + new_lvg.getType());
       loc_index = 1;
       offset = 1;
-      first_local_index++;
+      firstLocalIndex++;
     }
 
     // Loop through each parameter
@@ -1211,7 +1210,7 @@ public abstract class StackMapUtils {
         new_lvg = mgen.addLocalVariable(l.getName(), l.getType(), l.getIndex(), null, null);
         loc_index++;
       }
-      debug_instrument.log(
+      debugInstrument.log(
           "Added param  %s%n",
           new_lvg.getIndex() + ": " + new_lvg.getName() + ", " + new_lvg.getType());
       offset += arg_types[ii].getSize();
@@ -1223,10 +1222,10 @@ public abstract class StackMapUtils {
     // This will be used to construct the initial state of the
     // StackMapTypes.
     LocalVariableGen[] initial_locals = mgen.getLocalVariables();
-    initial_locals_count = initial_locals.length;
-    initial_type_list = new StackMapType[initial_locals_count];
-    for (int ii = 0; ii < initial_locals_count; ii++) {
-      initial_type_list[ii] = generate_StackMapType_from_Type(initial_locals[ii].getType());
+    initialLocalsCount = initial_locals.length;
+    initialTypeList = new StackMapType[initialLocalsCount];
+    for (int ii = 0; ii < initialLocalsCount; ii++) {
+      initialTypeList[ii] = generateStackMapTypeFromType(initial_locals[ii].getType());
     }
 
     // Add back the true locals
@@ -1238,7 +1237,7 @@ public abstract class StackMapUtils {
     //   (others?)
     // We will create a 'fake' local for these cases.
 
-    for (int ii = first_local_index; ii < locals.length; ii++) {
+    for (int ii = firstLocalIndex; ii < locals.length; ii++) {
       l = locals[ii];
       if (l.getIndex() > offset) {
         // A gap in index values indicates a compiler allocated temp.
@@ -1249,7 +1248,7 @@ public abstract class StackMapUtils {
       } else {
         new_lvg =
             mgen.addLocalVariable(l.getName(), l.getType(), l.getIndex(), l.getStart(), l.getEnd());
-        debug_instrument.log(
+        debugInstrument.log(
             "Added local  %s%n",
             new_lvg.getIndex() + ": " + new_lvg.getName() + ", " + new_lvg.getType());
         offset = new_lvg.getIndex() + new_lvg.getType().getSize();
@@ -1272,7 +1271,7 @@ public abstract class StackMapUtils {
    * @param mg MethodGen for the method to be analyzed
    * @return a StackTypes object for the method
    */
-  protected final StackTypes bcel_calc_stack_types(MethodGen mg) {
+  protected final StackTypes bcelCalcStackTypes(MethodGen mg) {
 
     StackVer stackver = new StackVer();
     VerificationResult vr;
