@@ -1,46 +1,46 @@
 plugins {
-  id 'java-library'
+  id "java-library"
 
 /*
   // To create a fat jar build/libs/...-all.jar, run: ./gradlew shadowJar
-  id 'com.gradleup.shadow' version '8.3.8'
+  id "com.gradleup.shadow" version "8.3.8"
 
   // Code formatting; defines targets "spotlessApply" and "spotlessCheck"
   // Version 6.14.0 and later requires JRE 11+, but version 6.13.0 doesn't work on JRE 21.
-  id 'com.diffplug.spotless' version '6.13.0'
+  id "com.diffplug.spotless" version "6.13.0"
 
   // Error Prone linter
-  id('net.ltgt.errorprone') version '4.3.0'
+  id("net.ltgt.errorprone") version "4.3.0"
 
   // Checker Framework pluggable type-checking
-  id 'org.checkerframework' version '0.6.56'
+  id "org.checkerframework" version "0.6.56"
 */
 
   // To show task list as a tree, run: ./gradlew <taskname> taskTree
-  id 'com.dorongold.task-tree' version '4.0.1'
+  id "com.dorongold.task-tree" version "4.0.1"
 }
 
 repositories {
   mavenLocal()
   mavenCentral()
-  maven { url = 'https://central.sonatype.com/repository/maven-snapshots/' }
+  maven { url = "https://central.sonatype.com/repository/maven-snapshots/" }
 }
 
 /*
 ext {
-  errorproneVersion = '2.41.0'
+  errorproneVersion = "2.41.0"
   isJava17orHigher = JavaVersion.current() >= JavaVersion.VERSION_17
   isJava21orHigher = JavaVersion.current() >= JavaVersion.VERSION_21
 }
 */
 
 dependencies {
-  api 'org.checkerframework.annotatedlib:bcel:6.5.0'
+  api "org.checkerframework.annotatedlib:bcel:6.5.0"
   // For a locally-built commons-bcel, set $BCEL and use this line instead of the above.
-  // implementation fileTree(dir: "$System.env.BCEL/target", include: 'bcel-6.2.0.2.jar')
+  // implementation fileTree(dir: "$System.env.BCEL/target", include: "bcel-6.2.0.2.jar")
 
-  implementation 'org.plumelib:reflection-util:1.1.5'
-  implementation 'org.checkerframework:checker-qual:3.+'
+  implementation "org.plumelib:reflection-util:1.1.5"
+  implementation "org.checkerframework:checker-qual:3.+"
 
   testImplementation("org.junit.jupiter:junit-jupiter:5.13.4")
   testRuntimeOnly("org.junit.platform:junit-platform-launcher")
@@ -58,17 +58,17 @@ java {
 
 test {
   useJUnitPlatform {
-    includeEngines 'junit-jupiter'
-    excludeEngines 'junit-vintage'
+    includeEngines "junit-jupiter"
+    excludeEngines "junit-vintage"
   }
 }
 
 /*
 if (! isJava21orHigher) {
   spotless {
-    format 'misc', {
+    format "misc", {
       // define the files to apply `misc` to
-      target '*.md', '.gitignore'
+      target "*.md", ".gitignore"
 
       // define the steps to apply to those files
       trimTrailingWhitespace()
@@ -76,12 +76,12 @@ if (! isJava21orHigher) {
       endWithNewline()
     }
     java {
-      targetExclude('WeakIdentityHashMap.java')
+      targetExclude("WeakIdentityHashMap.java")
       googleJavaFormat()
       formatAnnotations()
     }
     groovyGradle {
-      target '*.gradle'
+      target "*.gradle"
       greclipse()  // which formatter Spotless should use to format .gradle files.
       indentWithSpaces(2) // in Spotless version 7, change to: leadingTabsToSpaces(2)
       trimTrailingWhitespace()
@@ -98,13 +98,13 @@ dependencies {
 tasks.withType(JavaCompile).configureEach {
   // -processing: suppresses "No processor claimed any of these annotations"
   // -options: suppresses "target value 8 is obsolete and will be removed in a future release"
-  options.compilerArgs << '-Xlint:all,-processing,-options' << '-Werror'
+  options.compilerArgs << "-Xlint:all,-processing,-options" << "-Werror"
   options.errorprone {
-    disable('ExtendsObject')  // Incorrect when using the Checker Framework
-    disable('ReferenceEquality') // Use Interning Checker instead.
-    disable('AnnotateFormatMethod') // Error Prone doesn't know about Checker Framework @FormatMethod
+    disable("ExtendsObject")  // Incorrect when using the Checker Framework
+    disable("ReferenceEquality") // Use Interning Checker instead.
+    disable("AnnotateFormatMethod") // Error Prone doesn't know about Checker Framework @FormatMethod
     // Code copied from BCEL that we don't want to change gratuitously.
-    excludedPaths = 'org/plumelib/bcelutil/StackVer.java'
+    excludedPaths = "org/plumelib/bcelutil/StackVer.java"
   }
   options.errorprone.enabled = isJava17orHigher
 }
@@ -113,51 +113,51 @@ tasks.withType(JavaCompile).configureEach {
 // Checker Framework pluggable type-checking
 
 /*
-apply plugin: 'org.checkerframework'
+apply plugin: "org.checkerframework"
 
 checkerFramework {
   checkers = [
     // No need to run CalledMethodsChecker, because ResourceLeakChecker does so.
-    // 'org.checkerframework.checker.calledmethods.CalledMethodsChecker',
-    'org.checkerframework.checker.formatter.FormatterChecker',
-    // TODO: 'org.checkerframework.checker.index.IndexChecker',
-    'org.checkerframework.checker.interning.InterningChecker',
-    'org.checkerframework.checker.lock.LockChecker',
-    'org.checkerframework.checker.nullness.NullnessChecker',
-    'org.checkerframework.checker.regex.RegexChecker',
-    'org.checkerframework.checker.resourceleak.ResourceLeakChecker',
-    'org.checkerframework.checker.signature.SignatureChecker',
-    'org.checkerframework.checker.signedness.SignednessChecker',
-    'org.checkerframework.common.initializedfields.InitializedFieldsChecker',
+    // "org.checkerframework.checker.calledmethods.CalledMethodsChecker",
+    "org.checkerframework.checker.formatter.FormatterChecker",
+    // TODO: "org.checkerframework.checker.index.IndexChecker",
+    "org.checkerframework.checker.interning.InterningChecker",
+    "org.checkerframework.checker.lock.LockChecker",
+    "org.checkerframework.checker.nullness.NullnessChecker",
+    "org.checkerframework.checker.regex.RegexChecker",
+    "org.checkerframework.checker.resourceleak.ResourceLeakChecker",
+    "org.checkerframework.checker.signature.SignatureChecker",
+    "org.checkerframework.checker.signedness.SignednessChecker",
+    "org.checkerframework.common.initializedfields.InitializedFieldsChecker",
   ]
   extraJavacArgs = [
-    '-Werror',
-    '-AcheckPurityAnnotations',
-    '-ArequirePrefixInWarningSuppressions',
-    '-AwarnRedundantAnnotations',
-    '-AwarnUnneededSuppressions',
+    "-Werror",
+    "-AcheckPurityAnnotations",
+    "-ArequirePrefixInWarningSuppressions",
+    "-AwarnRedundantAnnotations",
+    "-AwarnUnneededSuppressions",
   ]
 }
 // To use a snapshot version of the Checker Framework.
 if (false) {
   // TODO: Change the above test to false when CF is released.
-  ext.checkerFrameworkVersion = '3.49.5'
+  ext.checkerFrameworkVersion = "3.49.5"
   dependencies {
     compileOnly "org.checkerframework:checker-qual:${checkerFrameworkVersion}"
     testCompileOnly "org.checkerframework:checker-qual:${checkerFrameworkVersion}"
     checkerFramework "org.checkerframework:checker:${checkerFrameworkVersion}"
   }
   configurations.all {
-    resolutionStrategy.cacheChangingModulesFor 0, 'minutes'
+    resolutionStrategy.cacheChangingModulesFor 0, "minutes"
   }
 }
 // To use a locally-built Checker Framework, run gradle with "-PcfLocal".
-if (project.hasProperty('cfLocal')) {
-  def cfHome = String.valueOf(System.getenv('CHECKERFRAMEWORK'))
+if (project.hasProperty("cfLocal")) {
+  def cfHome = String.valueOf(System.getenv("CHECKERFRAMEWORK"))
   dependencies {
-    compileOnly files(cfHome + '/checker/dist/checker-qual.jar')
-    testCompileOnly files(cfHome + '/checker/dist/checker-qual.jar')
-    checkerFramework files(cfHome + '/checker/dist/checker.jar')
+    compileOnly files(cfHome + "/checker/dist/checker-qual.jar")
+    testCompileOnly files(cfHome + "/checker/dist/checker-qual.jar")
+    checkerFramework files(cfHome + "/checker/dist/checker.jar")
   }
 }
 */
@@ -166,13 +166,13 @@ if (project.hasProperty('cfLocal')) {
 
 // Turn Javadoc warnings into errors.
 javadoc {
-  options.addStringOption('Xwerror', '-Xdoclint:all')
-  options.addStringOption('private', '-quiet')
-  exclude 'org/plumelib/bcelutil/StackVer.java'
+  options.addStringOption("Xwerror", "-Xdoclint:all")
+  options.addStringOption("private", "-quiet")
+  exclude "org/plumelib/bcelutil/StackVer.java"
   options.with {
-    // "linksOffline 'https://docs.oracle.com/javase/8/docs/api/', ..."
+    // "linksOffline "https://docs.oracle.com/javase/8/docs/api/", ..."
     // no longer works, because that URL redirects to https://docs.oracle.com/en/java/javase/19/ but not to any specific webpage under it.
-    // "linksOffline 'https://docs.oracle.com/en/java/javase/17/docs/api/', ..."
+    // "linksOffline "https://docs.oracle.com/en/java/javase/17/docs/api/", ..."
     // does not works under JDK <= 17.
     // Under JDK 11 and JDK 17, even with "-source 8", it yields error:
     //   The code being documented uses packages in the unnamed module, but the packages defined in
@@ -184,10 +184,10 @@ javadoc {
     //  * use JDK 17 links, and "--link-modularity-mismatch info", under JDK > 17 (i.e., JDK >= 18).
     // But it's easier to just not use "linksOffline".
   }
-  options.addStringOption('source', '11')
+  options.addStringOption("source", "11")
   doLast {
-    ant.replaceregexp(match:"@import url\\('resources/fonts/dejavu.css'\\);\\s*", replace:'',
-	              flags:'g', byline:true) {
+    ant.replaceregexp(match:"@import url\\('resources/fonts/dejavu.css'\\);\\s*", replace:"",
+	              flags:"g", byline:true) {
       fileset(dir: destinationDir)
     }
   }
@@ -195,22 +195,22 @@ javadoc {
 check.dependsOn javadoc
 
 task javadocWeb(type: Javadoc) {
-  description = 'Upload API documentation to website.'
+  description = "Upload API documentation to website."
   source = sourceSets.main.allJava
   destinationDir = file("/cse/web/research/plumelib/${project.name}/api")
   classpath = project.sourceSets.main.compileClasspath
-  options.addStringOption('source', '11')
+  options.addStringOption("source", "11")
   doLast {
-      ant.replaceregexp(match:"@import url\\('resources/fonts/dejavu.css'\\);\\s*", replace:'',
-	flags:'g', byline:true) {
+      ant.replaceregexp(match:"@import url\\('resources/fonts/dejavu.css'\\);\\s*", replace:"",
+	flags:"g", byline:true) {
 	fileset(dir: destinationDir)
       }
     // Set permissions
     project.exec {
-      commandLine('chgrp', '-R',  'plse_www', "/cse/web/research/plumelib/${project.name}/api")
+      commandLine("chgrp", "-R",  "plse_www", "/cse/web/research/plumelib/${project.name}/api")
     }
     project.exec {
-      commandLine('chmod', '-R',  'g+w', "/cse/web/research/plumelib/${project.name}/api")
+      commandLine("chmod", "-R",  "g+w", "/cse/web/research/plumelib/${project.name}/api")
     }
   }
 }
@@ -219,23 +219,23 @@ configurations {
   requireJavadoc
 }
 dependencies {
-  requireJavadoc 'org.plumelib:require-javadoc:2.0.0'
+  requireJavadoc "org.plumelib:require-javadoc:2.0.0"
 }
 task requireJavadoc(type: JavaExec) {
-  group = 'Documentation'
-  description = 'Ensures that Javadoc documentation exists.'
-  mainClass = 'org.plumelib.javadoc.RequireJavadoc'
+  group = "Documentation"
+  description = "Ensures that Javadoc documentation exists."
+  mainClass = "org.plumelib.javadoc.RequireJavadoc"
   classpath = configurations.requireJavadoc
-  args 'src/main/java'
+  args "src/main/java"
   jvmArgs += [
-    '--add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED',
-    '--add-exports=jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED',
-    '--add-exports=jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED',
-    '--add-exports=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED',
-    '--add-opens=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED',
-    '--add-opens=jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED',
-    '--add-opens=jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED',
-    '--add-opens=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED',
+    "--add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED",
+    "--add-exports=jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED",
+    "--add-exports=jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED",
+    "--add-exports=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED",
+    "--add-opens=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED",
+    "--add-opens=jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED",
+    "--add-opens=jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED",
+    "--add-opens=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED",
   ]
 }
 check.dependsOn requireJavadoc
@@ -245,20 +245,20 @@ javadocWeb.dependsOn requireJavadoc
 // Git hooks
 
 task installGitHooks(type: Copy) {
-  description = 'Copies git hooks to .git directory'
-  from 'githooks'
-  into '.git/hooks'
+  description = "Copies git hooks to .git directory"
+  from "githooks"
+  into ".git/hooks"
 }
 
 tasks.withType(JavaCompile) {
   options.release = 11
-  dependsOn(':installGitHooks')
+  dependsOn(":installGitHooks")
 }
 
 // Emacs support
 
 /* Make Emacs TAGS table */
 task tags(type: Exec) {
-  description = 'Run etags to create an Emacs TAGS table'
-  commandLine 'bash', '-c', "find src/ -name '*.java' | sort | xargs etags"
+  description = "Run etags to create an Emacs TAGS table"
+  commandLine "bash", "-c", "find src/ -name "*.java" | sort | xargs etags"
 }
